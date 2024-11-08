@@ -56,7 +56,6 @@ class SellerCreateSerializer(serializers.Serializer):
         market_ids=validated_data.pop('markets')
         seller=Seller.objects.create(**validated_data)
         markets = Market.objects.filter(id__in=market_ids)
-        seller.market.set(markets)
-        print(f"{seller.market}")
+        seller.markets.set(markets)
         return seller
 
