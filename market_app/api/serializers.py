@@ -1,5 +1,5 @@
 from rest_framework import serializers, status
-from market_app.models import Market, Seller
+from market_app.models import Market, Seller, Product
 
 
 def validate_noX(value):
@@ -38,24 +38,66 @@ class SellerDetailSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(max_length=255)
     contact_info = serializers.CharField(max_length=255)
-    markets = MarketSerializer(read_only=True, many=True)
+    # markets = MarketSerializer(read_only=True, many=True)
+    markets = serializers.StringRelatedField(many=True)
 
 
 class SellerCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     contact_info = serializers.CharField(max_length=255)
-    markets = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+    markets = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True)
 
     def validate_markets(self, value):
         markets = Market.objects.filter(id__in=value)
         if len(markets) != len(value):
-            raise serializers.ValidationError("One or more Marketids not found")
+            raise serializers.ValidationError(
+                "One or more Marketids not found")
         return value
-    
+
     def create(self, validated_data):
-        market_ids=validated_data.pop('markets')
-        seller=Seller.objects.create(**validated_data)
+        market_ids = validated_data.pop('markets')
+        seller = Seller.objects.create(**validated_data)
         markets = Market.objects.filter(id__in=market_ids)
         seller.markets.set(markets)
         return seller
 
+
+class ProductDetailSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    description = serializers.CharField(max_length=255)
+    price = serializers.DecimalField(max_digits=50, decimal_places=2)
+    markets = serializers.StringRelatedField(many=True)
+    sellers = serializers.StringRelatedField(many=True)
+
+
+class ProductCreateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    description = serializers.CharField(max_length=255)
+    price = serializers.DecimalField(max_digits=50, decimal_places=2)
+    markets = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+    sellers = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+
+    def validate_markets(self, value):
+        markets = Market.objects.filter(id__in=value)
+        if len(markets) != len(value):
+            raise serializers.ValidationError(
+                "One or more Marketids not found")
+        return value
+    
+    def validate_sellers(self, value):
+        sellers = Seller.objects.filter(id__in=value)
+        if len(sellers) != len(value):
+            raise serializers.ValidationError(
+                "One or more Sellerids not found")
+        return value
+    
+    def create(self, validated_data):
+        market_ids = validated_data.pop('markets')
+        seller_ids = validated_data.pop('sellers')
+        product = Product.objects.create(**validated_data)
+        markets = Market.objects.filter(id__in=market_ids)
+        product.markets.set(markets)
+        sellers = Seller.objects.filter(id__in=seller_ids)
+        product.sellers.set(sellers)
+        return product
