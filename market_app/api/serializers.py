@@ -75,8 +75,10 @@ class ProductCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     description = serializers.CharField(max_length=255)
     price = serializers.DecimalField(max_digits=50, decimal_places=2)
-    markets = serializers.ListField(child=serializers.IntegerField(), write_only=True)
-    sellers = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+    markets = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True)
+    sellers = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True)
 
     def validate_markets(self, value):
         markets = Market.objects.filter(id__in=value)
@@ -84,14 +86,14 @@ class ProductCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 "One or more Marketids not found")
         return value
-    
+
     def validate_sellers(self, value):
         sellers = Seller.objects.filter(id__in=value)
         if len(sellers) != len(value):
             raise serializers.ValidationError(
                 "One or more Sellerids not found")
         return value
-    
+
     def create(self, validated_data):
         market_ids = validated_data.pop('markets')
         seller_ids = validated_data.pop('sellers')
@@ -101,3 +103,25 @@ class ProductCreateSerializer(serializers.Serializer):
         sellers = Seller.objects.filter(id__in=seller_ids)
         product.sellers.set(sellers)
         return product
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get(
+            'description', instance.description)
+        instance.price = validated_data.get(
+            'price', instance.price)
+
+        if 'markets' in validated_data:
+            market_ids = validated_data.pop('markets')
+            markets = Market.objects.filter(id__in=market_ids)
+            instance.markets.set(markets)
+
+        if 'sellers' in validated_data:
+            seller_ids = validated_data.pop('sellers')
+            sellers = Seller.objects.filter(id__in=seller_ids)
+            instance.sellers.set(sellers)
+
+        instance.save()
+        return instance
+    
+    
