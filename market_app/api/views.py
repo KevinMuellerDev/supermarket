@@ -70,14 +70,12 @@ def seller_single_view(request, pk):
         seller = Seller.objects.get(pk=pk)
     except Seller.DoesNotExist:
         return Response({"detail": "Seller not found."}, status=status.HTTP_404_NOT_FOUND)
-    # single view funktioniert
-    if request.method == 'GET':
 
+    if request.method == 'GET':
         serializer = SellerSerializer(seller)
         return Response(serializer.data)
     
     if request.method == 'PUT':
-
         serializer = SellerSerializer(seller, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -87,7 +85,7 @@ def seller_single_view(request, pk):
 
     if request.method == 'DELETE':
         seller.delete()
-        return Response(serializer.data)
+        return Response("File deleted")
     
 @api_view(['GET','POST'])
 def product_view(request):
