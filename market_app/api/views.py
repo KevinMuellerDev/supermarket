@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import MarketSerializer, SellerDetailSerializer, SellerCreateSerializer, ProductDetailSerializer, ProductCreateSerializer
+from .serializers import MarketSerializer, SellerSerializer, ProductDetailSerializer, ProductCreateSerializer
 from market_app.models import Market, Seller, Product
 
 # function to get and post data, when fetched all data referred to market is fetched
@@ -53,18 +53,42 @@ def sellers_view(request):
 
     if request.method == 'GET':
         sellers = Seller.objects.all()
-        serializer = SellerDetailSerializer(sellers, many=True)
+        serializer = SellerSerializer(sellers, many=True)
         return Response(serializer.data)
 
     if request.method == 'POST':
-        serializer = SellerCreateSerializer(data=request.data)
+        serializer = SellerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+        
+@api_view(['GET','DELETE','PUT'])
+def seller_single_view(request, pk):
+    try:
+        seller = Seller.objects.get(pk=pk)
+    except Seller.DoesNotExist:
+        return Response({"detail": "Seller not found."}, status=status.HTTP_404_NOT_FOUND)
+    # single view funktioniert
+    if request.method == 'GET':
 
+        serializer = SellerSerializer(seller)
+        return Response(serializer.data)
+    
+    if request.method == 'PUT':
 
+        serializer = SellerSerializer(seller, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+    if request.method == 'DELETE':
+        seller.delete()
+        return Response(serializer.data)
+    
 @api_view(['GET','POST'])
 def product_view(request):
     if request.method == 'GET':
