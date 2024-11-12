@@ -21,25 +21,30 @@ class MarketSerializer(serializers.ModelSerializer):
 
 class SellerSerializer(serializers.ModelSerializer):
     markets = MarketSerializer(many=True, read_only=True)
-    
     market_ids = serializers.PrimaryKeyRelatedField(
         queryset=Market.objects.all(),
         many=True,
         write_only=True,
         source = 'markets'
     )
+    # deklaration der serializer methode
+    market_count = serializers.SerializerMethodField()
+    
     class Meta:
         model=Seller
-        fields='__all__'
+        fields=['id','name','market_count', 'market_ids','markets','contact_info']
         
     def update(self,instance,validated_data):
+        markets = validated_data.pop('markets',None)
         instance = super().update(instance, validated_data)
-        if 'markets' in validated_data:
-            market_ids = validated_data.pop('markets')
-            markets = Market.objects.filter(id__in=market_ids)
+        if markets is not None:
             instance.markets.set(markets)
         instance.save()
         return instance
+    
+    # get_ muss vor serializer methodfield stehen, eingegebenes object ist das welches bei aufruf des serializers rein gegeben wird
+    def get_market_count(self,obj):
+        return obj.markets.count()
 
 
 class ProductDetailSerializer(serializers.Serializer):
