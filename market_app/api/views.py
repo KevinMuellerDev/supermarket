@@ -11,7 +11,7 @@ from market_app.models import Market, Seller, Product
 def markets_view(request):
     if request.method == 'GET':
         markets = Market.objects.all()
-        serializer = MarketSerializer(markets, many=True)
+        serializer = MarketSerializer(markets, many=True, context={'request':request})
         return Response(serializer.data)
 
     if request.method == 'POST':
@@ -72,7 +72,7 @@ def seller_single_view(request, pk):
         return Response({"detail": "Seller not found."}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = SellerSerializer(seller)
+        serializer = SellerSerializer(seller, context={'request':request})
         return Response(serializer.data)
     
     if request.method == 'PUT':
