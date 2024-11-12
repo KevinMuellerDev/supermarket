@@ -6,7 +6,8 @@ urlpatterns = [
     path('market/', markets_view),
     path('market/<int:pk>/',market_single_view),
     path('seller/',sellers_view),
+    path('seller/<int:pk>/',seller_single_view, name='seller_single'),
     path('product/',product_view),
-    path('product/<int:pk>/',product_single_view),
-    path('seller/<int:pk>/',seller_single_view, name='seller_single')
+    path('product/<int:pk>/',product_single_view)
+
 ]

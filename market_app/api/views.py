@@ -64,6 +64,7 @@ def sellers_view(request):
         else:
             return Response(serializer.errors)
         
+        
 @api_view(['GET','DELETE','PUT'])
 def seller_single_view(request, pk):
     try:
@@ -87,6 +88,7 @@ def seller_single_view(request, pk):
         seller.delete()
         return Response("File deleted")
     
+    
 @api_view(['GET','POST'])
 def product_view(request):
     if request.method == 'GET':
@@ -101,6 +103,7 @@ def product_view(request):
             return Response(serializer.data)
         else:
             return Response(serializer.errors)
+
 
 @api_view(['GET','DELETE','PUT'])
 def product_single_view(request, pk):
