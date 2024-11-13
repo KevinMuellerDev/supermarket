@@ -20,7 +20,29 @@ class MarketSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Market
-        fields = '__all__'
+        exclude=[]
+        
+        
+class MarketHyperlinkedSerializer(MarketSerializer, serializers.HyperlinkedModelSerializer):
+    sellers=None
+    
+    def __init__(self, *args, **kwargs):
+        # Don't pass the 'fields' arg up to the superclass
+        fields = kwargs.pop('fields', None)
+
+        # Instantiate the superclass normally
+        super().__init__(*args, **kwargs)
+
+        if fields is not None:
+            # Drop any fields that are not specified in the `fields` argument.
+            allowed = set(fields)
+            existing = set(self.fields)
+            for field_name in existing - allowed:
+                self.fields.pop(field_name)
+                
+    class Meta:
+        model = Market
+        fields=['id','url','name','location', 'description','net_worth']
 
 
 class SellerSerializer(serializers.ModelSerializer):

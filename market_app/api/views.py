@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import MarketSerializer, SellerSerializer, ProductDetailSerializer, ProductCreateSerializer
+from .serializers import MarketSerializer, SellerSerializer, ProductDetailSerializer, ProductCreateSerializer, MarketHyperlinkedSerializer
 from market_app.models import Market, Seller, Product
 
 # function to get and post data, when fetched all data referred to market is fetched
@@ -11,7 +11,7 @@ from market_app.models import Market, Seller, Product
 def markets_view(request):
     if request.method == 'GET':
         markets = Market.objects.all()
-        serializer = MarketSerializer(markets, many=True, context={'request':request})
+        serializer = MarketHyperlinkedSerializer(markets, many=True, context={'request':request}, fields=('id','name','net_worth'))
         return Response(serializer.data)
 
     if request.method == 'POST':
@@ -29,7 +29,7 @@ def markets_view(request):
 def market_single_view(request, pk):
     if request.method == 'GET':
         market = Market.objects.get(pk=pk)
-        serializer = MarketSerializer(market)
+        serializer = MarketSerializer(market,context={'request': request})
         return Response(serializer.data)
 
     if request.method == 'PUT':
@@ -53,7 +53,7 @@ def sellers_view(request):
 
     if request.method == 'GET':
         sellers = Seller.objects.all()
-        serializer = SellerSerializer(sellers, many=True)
+        serializer = SellerSerializer(sellers, many=True, context={'request': request})
         return Response(serializer.data)
 
     if request.method == 'POST':
@@ -70,7 +70,7 @@ def seller_single_view(request, pk):
     try:
         seller = Seller.objects.get(pk=pk)
     except Seller.DoesNotExist:
-        return Response({"detail": "Seller not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "Seller not found."}, status=status.HTTP_404_NOT_FOUND,context={'request': request})
 
     if request.method == 'GET':
         serializer = SellerSerializer(seller, context={'request':request})
