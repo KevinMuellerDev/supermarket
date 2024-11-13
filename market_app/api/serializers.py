@@ -73,45 +73,59 @@ class SellerSerializer(serializers.ModelSerializer):
         return obj.markets.count()
 
 
-class ProductDetailSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=255)
-    description = serializers.CharField(max_length=255)
-    price = serializers.DecimalField(max_digits=50, decimal_places=2)
-    markets = serializers.StringRelatedField(many=True)
-    sellers = serializers.StringRelatedField(many=True)
+class ProductDetailSerializer(serializers.ModelSerializer):
+    markets= serializers.SerializerMethodField()
+    sellers=serializers.SerializerMethodField()
+    
+    class Meta:
+        model=Product
+        fields=['id','name','description','price','markets','sellers']
 
+    def get_markets(self,obj):
+        return [market.name for market in obj.markets.all()]
+    
+    def get_sellers(self,obj):
+        return[seller.name for seller in obj.sellers.all()]
+    
 
-class ProductCreateSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=255)
-    description = serializers.CharField(max_length=255)
-    price = serializers.DecimalField(max_digits=50, decimal_places=2)
-    markets = serializers.ListField(
-        child=serializers.IntegerField(), write_only=True)
-    sellers = serializers.ListField(
-        child=serializers.IntegerField(), write_only=True)
+class ProductCreateSerializer(serializers.ModelSerializer):
+    markets = serializers.PrimaryKeyRelatedField(
+        queryset=Market.objects.all(), many=True
+    )
+    sellers = serializers.PrimaryKeyRelatedField(
+        queryset=Seller.objects.all(), many=True
+    )
+    
+    class Meta:
+        model=Product
+        exclude=[]
 
     def validate_markets(self, value):
-        markets = Market.objects.filter(id__in=value)
+        # Stelle sicher, dass alle Market-IDs existieren
+        markets = Market.objects.filter(id__in=[market.id for market in value])
         if len(markets) != len(value):
-            raise serializers.ValidationError(
-                "One or more Marketids not found")
+            raise serializers.ValidationError("One or more Market IDs not found.")
         return value
 
     def validate_sellers(self, value):
-        sellers = Seller.objects.filter(id__in=value)
+        # Stelle sicher, dass alle Seller-IDs existieren
+        sellers = Seller.objects.filter(id__in=[seller.id for seller in value])
         if len(sellers) != len(value):
-            raise serializers.ValidationError(
-                "One or more Sellerids not found")
+            raise serializers.ValidationError("One or more Seller IDs not found.")
         return value
 
     def create(self, validated_data):
+        # IDs aus validated_data herausnehmen
         market_ids = validated_data.pop('markets')
         seller_ids = validated_data.pop('sellers')
+
+        # Produkt erstellen
         product = Product.objects.create(**validated_data)
-        markets = Market.objects.filter(id__in=market_ids)
-        product.markets.set(markets)
-        sellers = Seller.objects.filter(id__in=seller_ids)
-        product.sellers.set(sellers)
+
+        # Märkte und Verkäufer mit dem Produkt verknüpfen
+        product.markets.set(market_ids)
+        product.sellers.set(seller_ids)
+
         return product
 
     def update(self, instance, validated_data):
@@ -123,15 +137,15 @@ class ProductCreateSerializer(serializers.Serializer):
 
         if 'markets' in validated_data:
             market_ids = validated_data.pop('markets')
-            markets = Market.objects.filter(id__in=market_ids)
-            instance.markets.set(markets)
+            instance.markets.set(market_ids)
 
         if 'sellers' in validated_data:
             seller_ids = validated_data.pop('sellers')
-            sellers = Seller.objects.filter(id__in=seller_ids)
-            instance.sellers.set(sellers)
+            instance.sellers.set(seller_ids)
 
         instance.save()
         return instance
     
     
+    
+
