@@ -16,11 +16,12 @@ def validate_noX(value):
 class MarketSerializer(serializers.ModelSerializer):
     
     #nimmt sich seller aus der many to many beziehung von seller zu market und stellt ihn als weiterführenden link zur singleview dar
-    sellers =serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='seller_single')
+    sellers =serializers.StringRelatedField(many=True, read_only=True)
     
     class Meta:
         model = Market
-        exclude=[]
+        fields=['id','name','location','description','net_worth','sellers']
+
         
         
 class MarketHyperlinkedSerializer(MarketSerializer, serializers.HyperlinkedModelSerializer):
