@@ -76,11 +76,45 @@ class SellerSerializer(serializers.ModelSerializer):
 #
 
 class SellerListSerializer(SellerSerializer,serializers.HyperlinkedModelSerializer):
+    markets=serializers.PrimaryKeyRelatedField(queryset=Market.objects.all(), many=True)
     class Meta:
         model=Seller
         fields=['url','name','market_ids','market_count','contact_info']
         
-        
+
+class ProductSerializer(serializers.ModelSerializer):
+    markets = serializers.PrimaryKeyRelatedField(
+        queryset=Market.objects.all(), many=True
+    )
+    sellers = serializers.PrimaryKeyRelatedField(
+        queryset=Seller.objects.all(), many=True
+    )
+    class Meta:
+        model=Product
+        fields='__all__'
+    
+    def create(self, validated_data):
+        market_ids = validated_data.pop('markets')
+        seller_ids = validated_data.pop('sellers')
+
+        # Produkt erstellen
+        product = Product.objects.create(**validated_data)
+
+        # Märkte und Verkäufer mit dem Produkt verknüpfen
+        product.markets.set(market_ids)
+        product.sellers.set(seller_ids)
+
+        return product
+    
+    def to_representation(self, instance):
+        # Standard-Darstellung
+        representation = super().to_representation(instance)
+
+        # Märkte und Verkäufer durch ihre repräsentativen Strings ersetzen
+        representation['markets'] = [market.name for market in instance.markets.all()]
+        representation['sellers'] = [seller.name for seller in instance.sellers.all()]
+
+        return representation
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     markets= serializers.SerializerMethodField()
