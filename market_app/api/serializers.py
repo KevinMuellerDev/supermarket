@@ -43,11 +43,11 @@ class MarketHyperlinkedSerializer(MarketSerializer, serializers.HyperlinkedModel
                 
     class Meta:
         model = Market
-        fields=['id','url','name','location', 'description','net_worth']
+        fields=['id','name','location', 'sellers','description','net_worth']
 
 
 class SellerSerializer(serializers.ModelSerializer):
-    markets = MarketSerializer(many=True, read_only=True)
+    markets = serializers.StringRelatedField(many=True, read_only=True)
     market_ids = serializers.PrimaryKeyRelatedField(
         queryset=Market.objects.all(),
         many=True,
@@ -73,6 +73,14 @@ class SellerSerializer(serializers.ModelSerializer):
     def get_market_count(self,obj):
         return obj.markets.count()
 
+#
+
+class SellerListSerializer(SellerSerializer,serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model=Seller
+        fields=['url','name','market_ids','market_count','contact_info']
+        
+        
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     markets= serializers.SerializerMethodField()

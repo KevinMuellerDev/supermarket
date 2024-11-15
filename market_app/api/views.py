@@ -4,37 +4,27 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework import mixins
 from rest_framework import generics
-from .serializers import MarketSerializer, SellerSerializer, ProductDetailSerializer, ProductCreateSerializer, MarketHyperlinkedSerializer
+from .serializers import MarketSerializer, SellerSerializer, SellerListSerializer, ProductDetailSerializer, ProductCreateSerializer, MarketHyperlinkedSerializer
 from market_app.models import Market, Seller, Product
 
 # function to get and post data, when fetched all data referred to market is fetched
-class MarketsView(mixins.ListModelMixin,mixins.CreateModelMixin,generics.GenericAPIView):
-    queryset = Market.objects.all()
-    serializer_class = MarketSerializer
-    
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs) 
-
-
-class MarketDetail(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+class MarketsView(generics.ListCreateAPIView):
     queryset = Market.objects.all()
     serializer_class = MarketSerializer
 
-    def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
 
-    def put(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
-
-    def delete(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+class MarketDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Market.objects.all()
+    serializer_class = MarketSerializer
 
 
+class MarketSellerListView(generics.ListAPIView):
+    serializer_class= SellerListSerializer
 
+    def get_queryset(self):
+        pk = self.kwargs.get('pk')
+        market = Market.objects.get(pk = pk)
+        return market.sellers.all()
 
 # @api_view(['GET', 'POST'])
 # def markets_view(request):
